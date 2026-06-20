@@ -9,38 +9,160 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CarteRouteImport } from './routes/carte'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignalementsIndexRouteImport } from './routes/signalements.index'
+import { Route as SignalementsIdRouteImport } from './routes/signalements.$id'
+import { Route as AuthenticatedTableauDeBordRouteImport } from './routes/_authenticated/tableau-de-bord'
+import { Route as AuthenticatedSignalerRouteImport } from './routes/_authenticated/signaler'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 
+const CarteRoute = CarteRouteImport.update({
+  id: '/carte',
+  path: '/carte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignalementsIndexRoute = SignalementsIndexRouteImport.update({
+  id: '/signalements/',
+  path: '/signalements/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignalementsIdRoute = SignalementsIdRouteImport.update({
+  id: '/signalements/$id',
+  path: '/signalements/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTableauDeBordRoute =
+  AuthenticatedTableauDeBordRouteImport.update({
+    id: '/tableau-de-bord',
+    path: '/tableau-de-bord',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSignalerRoute = AuthenticatedSignalerRouteImport.update({
+  id: '/signaler',
+  path: '/signaler',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/carte': typeof CarteRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/signaler': typeof AuthenticatedSignalerRoute
+  '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/signalements/$id': typeof SignalementsIdRoute
+  '/signalements/': typeof SignalementsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/carte': typeof CarteRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/signaler': typeof AuthenticatedSignalerRoute
+  '/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/signalements/$id': typeof SignalementsIdRoute
+  '/signalements': typeof SignalementsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/carte': typeof CarteRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/_authenticated/signaler': typeof AuthenticatedSignalerRoute
+  '/_authenticated/tableau-de-bord': typeof AuthenticatedTableauDeBordRoute
+  '/signalements/$id': typeof SignalementsIdRoute
+  '/signalements/': typeof SignalementsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/carte'
+    | '/profil'
+    | '/signaler'
+    | '/tableau-de-bord'
+    | '/signalements/$id'
+    | '/signalements/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/carte'
+    | '/profil'
+    | '/signaler'
+    | '/tableau-de-bord'
+    | '/signalements/$id'
+    | '/signalements'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/carte'
+    | '/_authenticated/profil'
+    | '/_authenticated/signaler'
+    | '/_authenticated/tableau-de-bord'
+    | '/signalements/$id'
+    | '/signalements/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CarteRoute: typeof CarteRoute
+  SignalementsIdRoute: typeof SignalementsIdRoute
+  SignalementsIndexRoute: typeof SignalementsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/carte': {
+      id: '/carte'
+      path: '/carte'
+      fullPath: '/carte'
+      preLoaderRoute: typeof CarteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +170,66 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signalements/': {
+      id: '/signalements/'
+      path: '/signalements'
+      fullPath: '/signalements/'
+      preLoaderRoute: typeof SignalementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signalements/$id': {
+      id: '/signalements/$id'
+      path: '/signalements/$id'
+      fullPath: '/signalements/$id'
+      preLoaderRoute: typeof SignalementsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tableau-de-bord': {
+      id: '/_authenticated/tableau-de-bord'
+      path: '/tableau-de-bord'
+      fullPath: '/tableau-de-bord'
+      preLoaderRoute: typeof AuthenticatedTableauDeBordRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/signaler': {
+      id: '/_authenticated/signaler'
+      path: '/signaler'
+      fullPath: '/signaler'
+      preLoaderRoute: typeof AuthenticatedSignalerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedSignalerRoute: typeof AuthenticatedSignalerRoute
+  AuthenticatedTableauDeBordRoute: typeof AuthenticatedTableauDeBordRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedSignalerRoute: AuthenticatedSignalerRoute,
+  AuthenticatedTableauDeBordRoute: AuthenticatedTableauDeBordRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CarteRoute: CarteRoute,
+  SignalementsIdRoute: SignalementsIdRoute,
+  SignalementsIndexRoute: SignalementsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
