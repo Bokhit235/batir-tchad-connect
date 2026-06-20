@@ -1,0 +1,208 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { MapView } from "@/components/MapView";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { CATEGORIES, CHAD_PROVINCES, classifySeverity, type ReportCategory } from "@/lib/constants";
+import { Loader2, MapPin, Camera, X, Crosshair } from "lucide-react";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/signaler")({
+  component: SignalerPage,
+});
+
+function SignalerPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<ReportCategory>("route");
+  const [province, setProvince] = useState<string>("");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [latLng, setLatLng] = useState<[number, number] | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  function detectLocation() {
+    if (!navigator.geolocation) {
+      toast.error("Géolocalisation non disponible");
+      return;
+    }
+    toast.info("Localisation en cours…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatLng([pos.coords.latitude, pos.coords.longitude]);
+        toast.success("Position détectée");
+      },
+      () => toast.error("Impossible d'obtenir la position"),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const list = Array.from(e.target.files ?? []);
+    setFiles((prev) => [...prev, ...list].slice(0, 6));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    if (!latLng) { toast.error("Veuillez sélectionner la position sur la carte"); return; }
+    if (!title || !description) { toast.error("Titre et description requis"); return; }
+
+    setSubmitting(true);
+    try {
+      const severity = classifySeverity(category, description);
+      const { data: report, error } = await supabase.from("reports").insert({
+        reporter_id: user.id,
+        title, description, category, severity,
+        latitude: latLng[0], longitude: latLng[1],
+        province: province || null, city: city || null, address: address || null,
+      }).select().single();
+      if (error) throw error;
+
+      // upload images
+      for (const file of files) {
+        const ext = file.name.split(".").pop() ?? "jpg";
+        const path = `${user.id}/${report.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("report-photos").upload(path, file);
+        if (upErr) { console.error(upErr); continue; }
+        await supabase.from("report_images").insert({
+          report_id: report.id,
+          image_url: path,
+          storage_path: path,
+        });
+      }
+
+      toast.success("Signalement envoyé ! Merci pour votre contribution.");
+      navigate({ to: "/signalements/$id", params: { id: report.id } });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <h1 className="font-display text-3xl font-bold mb-2">Nouveau signalement</h1>
+      <p className="text-muted-foreground mb-6">Décrivez l'infrastructure dégradée. Les autorités seront notifiées.</p>
+
+      <form onSubmit={submit} className="space-y-6">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Description</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Titre du signalement *</Label>
+              <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Pont effondré sur la route N1" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Catégorie *</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Province</Label>
+                <Select value={province} onValueChange={setProvince}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectContent>
+                    {CHAD_PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">Ville / village</Label>
+                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Adresse / repère</Label>
+                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="desc">Description détaillée *</Label>
+              <Textarea id="desc" required rows={5} value={description} onChange={(e) => setDescription(e.target.value)}
+                placeholder="Décrivez l'état de l'infrastructure, depuis quand, l'impact sur la population…" />
+              <p className="text-xs text-muted-foreground">La gravité sera classée automatiquement selon votre description.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Localisation *</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={detectLocation}>
+                <Crosshair className="h-4 w-4 mr-1" /> Ma position
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">Cliquez sur la carte pour placer un marqueur, ou utilisez votre position GPS.</p>
+            <div className="h-80 rounded-lg overflow-hidden border">
+              <MapView
+                points={[]}
+                center={latLng ?? [15.4, 18.7]}
+                zoom={latLng ? 13 : 6}
+                onMapClick={(lat, lng) => setLatLng([lat, lng])}
+                selectedLatLng={latLng}
+              />
+            </div>
+            {latLng && (
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <MapPin className="h-3 w-3" /> {latLng[0].toFixed(5)}, {latLng[1].toFixed(5)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Photos (max 6)</CardTitle></CardHeader>
+          <CardContent>
+            <label className="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors">
+              <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <div className="text-sm font-medium">Cliquez pour ajouter des photos</div>
+              <div className="text-xs text-muted-foreground">JPG, PNG · plusieurs fichiers possibles</div>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+            </label>
+            {files.length > 0 && (
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-3">
+                {files.map((f, i) => (
+                  <div key={i} className="relative aspect-square rounded-md overflow-hidden border group">
+                    <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                      className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-3 justify-end">
+          <Button type="button" variant="ghost" onClick={() => navigate({ to: "/" })}>Annuler</Button>
+          <Button type="submit" size="lg" disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Envoyer le signalement
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
