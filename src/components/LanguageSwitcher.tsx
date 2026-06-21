@@ -7,25 +7,31 @@ export function LanguageSwitcher({ className }: { className?: string }) {
   const isAr = i18n.language.startsWith("ar");
 
   return (
-    <div className={cn("inline-flex items-center rounded-md border overflow-hidden bg-background", className)}>
+    <div className={cn("inline-flex items-center rounded-md border border-primary-foreground/40 overflow-hidden", className)}>
       <Button
         type="button"
         size="sm"
-        variant={isAr ? "ghost" : "default"}
+        variant="ghost"
         onClick={() => i18n.changeLanguage("fr")}
-        className="rounded-none px-2.5 py-1 text-xs gap-1"
+        className={cn(
+          "rounded-none px-2.5 py-1 text-xs gap-1 hover:bg-primary/50",
+          !isAr ? "bg-secondary text-secondary-foreground hover:bg-secondary/90" : "text-primary-foreground",
+        )}
         aria-pressed={!isAr}
       >
         <span aria-hidden>🇫🇷</span>
         <span className="font-semibold">FR</span>
       </Button>
-      <div className="w-px bg-border h-4" />
+      <div className="w-px bg-primary-foreground/40 h-4" />
       <Button
         type="button"
         size="sm"
-        variant={isAr ? "default" : "ghost"}
+        variant="ghost"
         onClick={() => i18n.changeLanguage("ar")}
-        className="rounded-none px-2.5 py-1 text-xs gap-1"
+        className={cn(
+          "rounded-none px-2.5 py-1 text-xs gap-1 hover:bg-primary/50",
+          isAr ? "bg-secondary text-secondary-foreground hover:bg-secondary/90" : "text-primary-foreground",
+        )}
         aria-pressed={isAr}
       >
         <span aria-hidden>🇸🇦</span>
