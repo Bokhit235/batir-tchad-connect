@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { MapPin, LayoutDashboard, Plus, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { MapPin, Plus, LogOut, User as UserIcon, Menu } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function Navbar() {
   const { user, signOut, isAuthority, loading } = useAuth();
