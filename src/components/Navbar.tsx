@@ -42,6 +42,13 @@ export function Navbar() {
 
         <nav className="hidden md:flex items-center gap-6">{navLinks}</nav>
 
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher />
+          <button className="p-2" onClick={() => setOpen(!open)} aria-label={t("nav.menu")}>
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+
         <div className="hidden md:flex items-center gap-2">
           <LanguageSwitcher />
           {loading ? null : user ? (
@@ -67,10 +74,6 @@ export function Navbar() {
             </>
           )}
         </div>
-
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label={t("nav.menu")}>
-          <Menu className="h-5 w-5" />
-        </button>
       </div>
 
       {open && (
