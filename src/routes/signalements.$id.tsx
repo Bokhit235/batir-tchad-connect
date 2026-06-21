@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { MapView } from "@/components/MapView";
 import { SeverityBadge, StatusBadge } from "@/components/SeverityBadge";
@@ -94,6 +95,8 @@ function DetailPage() {
     return <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">{t("common.loading")}</div>;
   }
 
+  const locale = i18n.language.startsWith("ar") ? "ar-SA" : "fr-FR";
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <Link to="/signalements" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -117,7 +120,7 @@ function DetailPage() {
               <h1 className="font-display text-2xl md:text-3xl font-bold">{report.title}</h1>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center gap-1"><MapPin className="h-4 w-4" />{report.city || "—"}, {report.province || t("common.chad")}</div>
-                <div className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(report.created_at).toLocaleDateString(i18n.language.startsWith("ar") ? "ar-SA" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}</div>
+                <div className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(report.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</div>
               </div>
               <p className="mt-4 whitespace-pre-wrap text-foreground/90">{report.description}</p>
               {report.resolution_note && (
@@ -198,7 +201,7 @@ function DetailPage() {
                         {h.old_status ? <>{t("detail.from")} <StatusBadge value={h.old_status as ReportStatus} /> {t("detail.to")} </> : null}
                         <StatusBadge value={h.new_status as ReportStatus} />
                       </div>
-                      <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString(i18n.language.startsWith("ar") ? "ar-SA" : "fr-FR")}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString(locale)}</div>
                       {h.note && <div className="text-sm mt-1">{h.note}</div>}
                     </li>
                   ))}
@@ -211,5 +214,3 @@ function DetailPage() {
     </div>
   );
 }
-
-import i18n from "i18next";
