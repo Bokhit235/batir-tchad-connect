@@ -1,5 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/tableau-de-bord")({
 });
 
 function DashboardPage() {
+  const { t } = useTranslation();
   const { isAuthority, loading } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ReportCategory | "all">("all");
@@ -63,17 +65,17 @@ function DashboardPage() {
     );
   }, [reports, search, category, status, severity, province]);
 
-  if (loading) return <div className="container mx-auto px-4 py-16 text-center">Chargement…</div>;
+  if (loading) return <div className="container mx-auto px-4 py-16 text-center">{t("common.loading")}</div>;
 
   if (!isAuthority) {
     return (
       <div className="container mx-auto px-4 py-16 max-w-md text-center">
         <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h1 className="font-display text-2xl font-bold mb-2">Accès restreint</h1>
+        <h1 className="font-display text-2xl font-bold mb-2">{t("dashboard.restricted")}</h1>
         <p className="text-muted-foreground mb-6">
-          Ce tableau de bord est réservé aux autorités et administrateurs. Contactez un administrateur pour obtenir l'accès.
+          {t("dashboard.restrictedDesc")}
         </p>
-        <Button asChild><Link to="/">Retour à l'accueil</Link></Button>
+        <Button asChild><Link to="/">{t("dashboard.backHome")}</Link></Button>
       </div>
     );
   }
@@ -84,22 +86,22 @@ function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold">Tableau de bord</h1>
-        <p className="text-muted-foreground">Vue d'ensemble des signalements sur le territoire tchadien.</p>
+        <h1 className="font-display text-3xl font-bold">{t("dashboard.title")}</h1>
+        <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={FileText} label="Total" value={stats.total} color="bg-primary text-primary-foreground" />
-        <StatCard icon={AlertTriangle} label="Critiques (rouge)" value={stats.critical} color="bg-destructive text-destructive-foreground" />
-        <StatCard icon={BarChart3} label="En cours" value={stats.inProgress} color="bg-secondary text-secondary-foreground" />
-        <StatCard icon={CheckCircle2} label="Résolus" value={stats.resolved} color="bg-[color:var(--color-severity-vert)] text-white" />
+        <StatCard icon={FileText} label={t("dashboard.total")} value={stats.total} color="bg-primary text-primary-foreground" />
+        <StatCard icon={AlertTriangle} label={t("dashboard.critical")} value={stats.critical} color="bg-destructive text-destructive-foreground" />
+        <StatCard icon={BarChart3} label={t("dashboard.inProgress")} value={stats.inProgress} color="bg-secondary text-secondary-foreground" />
+        <StatCard icon={CheckCircle2} label={t("dashboard.resolved")} value={stats.resolved} color="bg-[color:var(--color-severity-vert)] text-white" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         <Card>
-          <CardHeader><CardTitle className="text-base">Top provinces</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("dashboard.topProvinces")}</CardTitle></CardHeader>
           <CardContent>
-            {topProvinces.length === 0 ? <p className="text-sm text-muted-foreground">Aucune donnée</p> : (
+            {topProvinces.length === 0 ? <p className="text-sm text-muted-foreground">{t("dashboard.noData")}</p> : (
               <div className="space-y-2">
                 {topProvinces.map(([p, n]) => {
                   const pct = stats.total > 0 ? (n / stats.total) * 100 : 0;
@@ -117,14 +119,14 @@ function DashboardPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base">Par catégorie</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("dashboard.byCategory")}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
               {topCategories.map(([cat, n]) => {
                 const c = getCategory(cat);
                 return (
                   <div key={cat} className="flex items-center justify-between p-2 rounded-md bg-muted/40">
-                    <span className="text-sm">{c.icon} {c.label}</span>
+                    <span className="text-sm">{c.icon} {t(`categories.${c.value}`)}</span>
                     <span className="font-bold text-sm">{n}</span>
                   </div>
                 );
@@ -137,27 +139,27 @@ function DashboardPage() {
       <Card className="mb-4">
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="md:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="ps-9" placeholder={t("common.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory | "all")}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes catégories</SelectItem>
-              {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>)}
+              <SelectItem value="all">{t("map.allCategories")}</SelectItem>
+              {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {t(`categories.${c.value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => setStatus(v as ReportStatus | "all")}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous statuts</SelectItem>
-              {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              <SelectItem value="all">{t("map.allStatuses")}</SelectItem>
+              {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{t(`statuses.${s.value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={province} onValueChange={setProvince}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes provinces</SelectItem>
+              <SelectItem value="all">{t("map.allProvinces")}</SelectItem>
               {CHAD_PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -168,13 +170,13 @@ function DashboardPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left">
+              <thead className="bg-muted/60">
                 <tr>
-                  <th className="p-3">Signalement</th>
-                  <th className="p-3 hidden md:table-cell">Catégorie</th>
-                  <th className="p-3 hidden lg:table-cell">Lieu</th>
-                  <th className="p-3">Gravité</th>
-                  <th className="p-3">Statut</th>
+                  <th className="p-3 text-start">{t("dashboard.reportCol")}</th>
+                  <th className="p-3 hidden md:table-cell text-start">{t("dashboard.catCol")}</th>
+                  <th className="p-3 hidden lg:table-cell text-start">{t("dashboard.placeCol")}</th>
+                  <th className="p-3 text-start">{t("dashboard.severityCol")}</th>
+                  <th className="p-3 text-start">{t("dashboard.statusCol")}</th>
                   <th className="p-3"></th>
                 </tr>
               </thead>
@@ -187,20 +189,20 @@ function DashboardPage() {
                         <div className="font-medium line-clamp-1">{r.title}</div>
                         <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("fr-FR")}</div>
                       </td>
-                      <td className="p-3 hidden md:table-cell">{cat.icon} {cat.label}</td>
+                      <td className="p-3 hidden md:table-cell">{cat.icon} {t(`categories.${cat.value}`)}</td>
                       <td className="p-3 hidden lg:table-cell text-muted-foreground">{r.city || "—"}, {r.province || "—"}</td>
                       <td className="p-3"><SeverityBadge value={r.severity as ReportSeverity} /></td>
                       <td className="p-3"><StatusBadge value={r.status as ReportStatus} /></td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-end">
                         <Button asChild size="sm" variant="ghost">
-                          <Link to="/signalements/$id" params={{ id: r.id }}>Ouvrir</Link>
+                          <Link to="/signalements/$id" params={{ id: r.id }}>{t("common.open")}</Link>
                         </Button>
                       </td>
                     </tr>
                   );
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Aucun signalement</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{t("dashboard.noReports")}</td></tr>
                 )}
               </tbody>
             </table>
