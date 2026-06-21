@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES, STATUSES, SEVERITIES, CHAD_PROVINCES, getCategory, type ReportCategory, type ReportSeverity, type ReportStatus } from "@/lib/constants";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/signalements/")({
 });
 
 function ListPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ReportCategory | "all">("all");
   const [status, setStatus] = useState<ReportStatus | "all">("all");
@@ -53,34 +55,34 @@ function ListPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold">Signalements</h1>
-        <p className="text-muted-foreground">Parcourez tous les signalements de la communauté.</p>
+        <h1 className="font-display text-3xl font-bold">{t("list.title")}</h1>
+        <p className="text-muted-foreground">{t("list.subtitle")}</p>
       </div>
 
       <Card className="mb-6">
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="md:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="ps-9" placeholder={t("common.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory | "all")}>
-            <SelectTrigger><SelectValue placeholder="Catégorie" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("map.category")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes catégories</SelectItem>
-              {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>)}
+              <SelectItem value="all">{t("map.allCategories")}</SelectItem>
+              {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {t(`categories.${c.value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => setStatus(v as ReportStatus | "all")}>
-            <SelectTrigger><SelectValue placeholder="Statut" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("map.status")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous statuts</SelectItem>
-              {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              <SelectItem value="all">{t("map.allStatuses")}</SelectItem>
+              {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{t(`statuses.${s.value}`)}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={province} onValueChange={setProvince}>
-            <SelectTrigger><SelectValue placeholder="Province" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("map.province")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes provinces</SelectItem>
+              <SelectItem value="all">{t("map.allProvinces")}</SelectItem>
               {CHAD_PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -88,9 +90,9 @@ function ListPage() {
       </Card>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Chargement…</div>
+        <div className="text-center py-12 text-muted-foreground">{t("common.loading")}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">Aucun signalement trouvé.</div>
+        <div className="text-center py-12 text-muted-foreground">{t("list.empty")}</div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((r) => {
@@ -102,7 +104,7 @@ function ListPage() {
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{cat.icon}</span>
-                        <span className="text-xs font-medium text-muted-foreground uppercase">{cat.label}</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase">{t(`categories.${cat.value}`)}</span>
                       </div>
                       <SeverityBadge value={r.severity as ReportSeverity} />
                     </div>
@@ -111,7 +113,7 @@ function ListPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin className="h-3 w-3" />
-                        {r.city || r.province || "Tchad"}
+                        {r.city || r.province || t("common.chad")}
                       </div>
                       <StatusBadge value={r.status as ReportStatus} />
                     </div>

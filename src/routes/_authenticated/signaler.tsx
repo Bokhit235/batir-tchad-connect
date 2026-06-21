@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/signaler")({
 });
 
 function SignalerPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
@@ -33,16 +35,16 @@ function SignalerPage() {
 
   function detectLocation() {
     if (!navigator.geolocation) {
-      toast.error("Géolocalisation non disponible");
+      toast.error(t("signaler.errGeoUnavailable"));
       return;
     }
-    toast.info("Localisation en cours…");
+    toast.info(t("signaler.locating"));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLatLng([pos.coords.latitude, pos.coords.longitude]);
-        toast.success("Position détectée");
+        toast.success(t("signaler.positionDetected"));
       },
-      () => toast.error("Impossible d'obtenir la position"),
+      () => toast.error(t("signaler.errPosition")),
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }
@@ -55,8 +57,8 @@ function SignalerPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    if (!latLng) { toast.error("Veuillez sélectionner la position sur la carte"); return; }
-    if (!title || !description) { toast.error("Titre et description requis"); return; }
+    if (!latLng) { toast.error(t("signaler.errSelectLocation")); return; }
+    if (!title || !description) { toast.error(t("signaler.errTitleDesc")); return; }
 
     setSubmitting(true);
     try {
@@ -82,7 +84,7 @@ function SignalerPage() {
         });
       }
 
-      toast.success("Signalement envoyé ! Merci pour votre contribution.");
+      toast.success(t("signaler.sent"));
       navigate({ to: "/signalements/$id", params: { id: report.id } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur";
@@ -94,50 +96,50 @@ function SignalerPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="font-display text-3xl font-bold mb-2">Nouveau signalement</h1>
-      <p className="text-muted-foreground mb-6">Décrivez l'infrastructure dégradée. Les autorités seront notifiées.</p>
+      <h1 className="font-display text-3xl font-bold mb-2">{t("signaler.title")}</h1>
+      <p className="text-muted-foreground mb-6">{t("signaler.subtitle")}</p>
 
       <form onSubmit={submit} className="space-y-6">
         <Card>
-          <CardHeader><CardTitle className="text-base">Description</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("signaler.description")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Titre du signalement *</Label>
-              <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Pont effondré sur la route N1" />
+              <Label htmlFor="title">{t("signaler.reportTitle")}</Label>
+              <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("signaler.reportTitlePh")} />
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Catégorie *</Label>
+                <Label>{t("signaler.categoryReq")}</Label>
                 <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>)}
+                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {t(`categories.${c.value}`)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Province</Label>
+                <Label>{t("map.province")}</Label>
                 <Select value={province} onValueChange={setProvince}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("profile.selectProvince")} /></SelectTrigger>
                   <SelectContent>
                     {CHAD_PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city">Ville / village</Label>
+                <Label htmlFor="city">{t("signaler.cityVillage")}</Label>
                 <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Adresse / repère</Label>
+                <Label htmlFor="address">{t("signaler.addressLandmark")}</Label>
                 <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="desc">Description détaillée *</Label>
+              <Label htmlFor="desc">{t("signaler.descDetailed")}</Label>
               <Textarea id="desc" required rows={5} value={description} onChange={(e) => setDescription(e.target.value)}
-                placeholder="Décrivez l'état de l'infrastructure, depuis quand, l'impact sur la population…" />
-              <p className="text-xs text-muted-foreground">La gravité sera classée automatiquement selon votre description.</p>
+                placeholder={t("signaler.descPh")} />
+              <p className="text-xs text-muted-foreground">{t("signaler.severityHint")}</p>
             </div>
           </CardContent>
         </Card>
@@ -145,14 +147,14 @@ function SignalerPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Localisation *</CardTitle>
+              <CardTitle className="text-base">{t("signaler.locationReq")}</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={detectLocation}>
-                <Crosshair className="h-4 w-4 mr-1" /> Ma position
+                <Crosshair className="h-4 w-4 me-1" /> {t("signaler.myPosition")}
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">Cliquez sur la carte pour placer un marqueur, ou utilisez votre position GPS.</p>
+            <p className="text-sm text-muted-foreground mb-3">{t("signaler.clickMap")}</p>
             <div className="h-80 rounded-lg overflow-hidden border">
               <MapView
                 points={[]}
@@ -171,12 +173,12 @@ function SignalerPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Photos (max 6)</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("signaler.photos")}</CardTitle></CardHeader>
           <CardContent>
             <label className="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors">
               <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <div className="text-sm font-medium">Cliquez pour ajouter des photos</div>
-              <div className="text-xs text-muted-foreground">JPG, PNG · plusieurs fichiers possibles</div>
+              <div className="text-sm font-medium">{t("signaler.addPhotos")}</div>
+              <div className="text-xs text-muted-foreground">{t("signaler.photoFormats")}</div>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
             </label>
             {files.length > 0 && (
@@ -185,7 +187,7 @@ function SignalerPage() {
                   <div key={i} className="relative aspect-square rounded-md overflow-hidden border group">
                     <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
                     <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))}
-                      className="absolute top-1 right-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      className="absolute top-1 end-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3 w-3" />
                     </button>
                   </div>
@@ -196,10 +198,10 @@ function SignalerPage() {
         </Card>
 
         <div className="flex gap-3 justify-end">
-          <Button type="button" variant="ghost" onClick={() => navigate({ to: "/" })}>Annuler</Button>
+          <Button type="button" variant="ghost" onClick={() => navigate({ to: "/" })}>{t("common.cancel")}</Button>
           <Button type="submit" size="lg" disabled={submitting}>
-            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Envoyer le signalement
+            {submitting && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+            {t("signaler.submit")}
           </Button>
         </div>
       </form>

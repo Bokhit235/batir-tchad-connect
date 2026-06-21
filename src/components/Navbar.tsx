@@ -1,24 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { MapPin, LayoutDashboard, Plus, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { MapPin, Plus, LogOut, User as UserIcon, Menu } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function Navbar() {
+  const { t } = useTranslation();
   const { user, signOut, isAuthority, loading } = useAuth();
   const [open, setOpen] = useState(false);
 
   const navLinks = (
     <>
       <Link to="/carte" className="text-sm font-medium hover:text-secondary transition-colors" onClick={() => setOpen(false)}>
-        Carte
+        {t("nav.map")}
       </Link>
       <Link to="/signalements" className="text-sm font-medium hover:text-secondary transition-colors" onClick={() => setOpen(false)}>
-        Signalements
+        {t("nav.reports")}
       </Link>
       {isAuthority && (
         <Link to="/tableau-de-bord" className="text-sm font-medium hover:text-secondary transition-colors" onClick={() => setOpen(false)}>
-          Tableau de bord
+          {t("nav.dashboard")}
         </Link>
       )}
     </>
@@ -33,17 +36,25 @@ export function Navbar() {
           </div>
           <div className="hidden sm:block">
             <div className="font-display font-bold text-base leading-tight">BATIR TCHAD</div>
-            <div className="text-[10px] uppercase tracking-wider opacity-70 leading-tight">Plateforme citoyenne</div>
+            <div className="text-[10px] uppercase tracking-wider opacity-70 leading-tight">{t("nav.tagline")}</div>
           </div>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">{navLinks}</nav>
 
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher />
+          <button className="p-2" onClick={() => setOpen(!open)} aria-label={t("nav.menu")}>
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+
         <div className="hidden md:flex items-center gap-2">
+          <LanguageSwitcher />
           {loading ? null : user ? (
             <>
               <Button asChild size="sm" variant="secondary">
-                <Link to="/signaler"><Plus className="h-4 w-4 mr-1" />Signaler</Link>
+                <Link to="/signaler"><Plus className="h-4 w-4 me-1" />{t("nav.report")}</Link>
               </Button>
               <Button asChild size="sm" variant="ghost" className="text-primary-foreground hover:bg-primary/60">
                 <Link to="/profil"><UserIcon className="h-4 w-4" /></Link>
@@ -55,18 +66,14 @@ export function Navbar() {
           ) : (
             <>
               <Button asChild size="sm" variant="ghost" className="text-primary-foreground hover:bg-primary/60">
-                <Link to="/auth">Se connecter</Link>
+                <Link to="/auth">{t("nav.signIn")}</Link>
               </Button>
               <Button asChild size="sm" variant="secondary">
-                <Link to="/auth" search={{ mode: "signup" } as never}>S'inscrire</Link>
+                <Link to="/auth" search={{ mode: "signup" } as never}>{t("nav.signUp")}</Link>
               </Button>
             </>
           )}
         </div>
-
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
-          <Menu className="h-5 w-5" />
-        </button>
       </div>
 
       {open && (
@@ -74,12 +81,12 @@ export function Navbar() {
           {navLinks}
           {user ? (
             <>
-              <Link to="/signaler" className="text-sm font-medium" onClick={() => setOpen(false)}>+ Nouveau signalement</Link>
-              <Link to="/profil" className="text-sm font-medium" onClick={() => setOpen(false)}>Mon profil</Link>
-              <button className="text-sm font-medium text-left" onClick={() => { setOpen(false); signOut(); }}>Se déconnecter</button>
+              <Link to="/signaler" className="text-sm font-medium" onClick={() => setOpen(false)}>{t("nav.newReport")}</Link>
+              <Link to="/profil" className="text-sm font-medium" onClick={() => setOpen(false)}>{t("nav.profile")}</Link>
+              <button className="text-sm font-medium text-start" onClick={() => { setOpen(false); signOut(); }}>{t("nav.signOut")}</button>
             </>
           ) : (
-            <Link to="/auth" className="text-sm font-medium" onClick={() => setOpen(false)}>Se connecter / S'inscrire</Link>
+            <Link to="/auth" className="text-sm font-medium" onClick={() => setOpen(false)}>{t("nav.signInOrUp")}</Link>
           )}
         </div>
       )}
@@ -88,16 +95,17 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="mt-16 border-t bg-muted/40">
       <div className="container mx-auto px-4 py-8 text-sm text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          <span>BATIR TCHAD — Construisons ensemble notre nation</span>
+          <span>{t("home.footerTagline")}</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/carte" className="hover:text-foreground">Carte</Link>
-          <Link to="/signalements" className="hover:text-foreground">Signalements</Link>
+          <Link to="/carte" className="hover:text-foreground">{t("nav.map")}</Link>
+          <Link to="/signalements" className="hover:text-foreground">{t("nav.reports")}</Link>
           <span aria-hidden>·</span>
           <span>© {new Date().getFullYear()}</span>
         </div>
@@ -105,6 +113,3 @@ export function Footer() {
     </footer>
   );
 }
-
-// re-export for convenience
-export { LayoutDashboard };

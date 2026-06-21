@@ -148,6 +148,36 @@
   }
 }
 
+/* RTL support */
+[dir="rtl"],
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl [class*="absolute left-"] {
+  left: auto;
+}
+.rtl [class*="absolute right-"] {
+  right: auto;
+}
+
+.rtl .container {
+  text-align: right;
+}
+
+.rtl table,
+.rtl [class*="text-left"] {
+  text-align: right;
+}
+
+.rtl [class*="ms-"] {
+  margin-inline-start: var(--tw-space-x-reverse, 0);
+}
+.rtl [class*="me-"] {
+  margin-inline-end: var(--tw-space-x-reverse, 0);
+}
+
 /* Leaflet fixes inside Tailwind reset */
 .leaflet-container {
   width: 100%;
@@ -166,3 +196,4 @@
 .leaflet-layer {
   max-width: none !important;
 }
+
