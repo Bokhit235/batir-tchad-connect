@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MapView, type MapPoint } from "@/components/MapView";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/carte")({
 });
 
 function CartePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [category, setCategory] = useState<ReportCategory | "all">("all");
   const [status, setStatus] = useState<ReportStatus | "all">("all");
@@ -67,12 +69,12 @@ function CartePage() {
     <div className="container mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-4 mb-4">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold">Carte des signalements</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} signalement(s) affiché(s)</p>
+          <h1 className="font-display text-2xl md:text-3xl font-bold">{t("map.title")}</h1>
+          <p className="text-sm text-muted-foreground">{filtered.length} {t("map.countSuffix")}</p>
         </div>
         <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-          <Filter className="h-4 w-4 mr-2" />
-          Filtres {activeFilters > 0 && <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs px-1.5">{activeFilters}</span>}
+          <Filter className="h-4 w-4 me-2" />
+          {t("map.filters")} {activeFilters > 0 && <span className="ms-1 rounded-full bg-primary text-primary-foreground text-xs px-1.5">{activeFilters}</span>}
         </Button>
       </div>
 
@@ -80,36 +82,36 @@ function CartePage() {
         <Card className="mb-4">
           <CardContent className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
             <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory | "all")}>
-              <SelectTrigger><SelectValue placeholder="Catégorie" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("map.category")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes catégories</SelectItem>
-                {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {c.label}</SelectItem>)}
+                <SelectItem value="all">{t("map.allCategories")}</SelectItem>
+                {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.icon} {t(`categories.${c.value}`)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={status} onValueChange={(v) => setStatus(v as ReportStatus | "all")}>
-              <SelectTrigger><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("map.status")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                <SelectItem value="all">{t("map.allStatuses")}</SelectItem>
+                {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{t(`statuses.${s.value}`)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={severity} onValueChange={(v) => setSeverity(v as ReportSeverity | "all")}>
-              <SelectTrigger><SelectValue placeholder="Gravité" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("map.severity")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes gravités</SelectItem>
-                {SEVERITIES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                <SelectItem value="all">{t("map.allSeverities")}</SelectItem>
+                {SEVERITIES.map((s) => <SelectItem key={s.value} value={s.value}>{t(`severities.${s.value}`)}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={province} onValueChange={setProvince}>
-              <SelectTrigger><SelectValue placeholder="Province" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("map.province")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes provinces</SelectItem>
+                <SelectItem value="all">{t("map.allProvinces")}</SelectItem>
                 {CHAD_PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
               </SelectContent>
             </Select>
             {activeFilters > 0 && (
               <Button variant="ghost" size="sm" onClick={() => { setCategory("all"); setStatus("all"); setSeverity("all"); setProvince("all"); }} className="col-span-2 md:col-span-4">
-                <X className="h-4 w-4 mr-1" /> Réinitialiser
+                <X className="h-4 w-4 me-1" /> {t("common.reset")}
               </Button>
             )}
           </CardContent>
@@ -124,11 +126,11 @@ function CartePage() {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3 text-xs">
-        <span className="text-muted-foreground">Légende :</span>
+        <span className="text-muted-foreground">{t("map.legend")}</span>
         {SEVERITIES.map((s) => (
           <div key={s.value} className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded-full" style={{ background: s.hex }} />
-            {s.label}
+            {t(`severities.${s.value}`)}
           </div>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode } = Route.useSearch();
   const [tab, setTab] = useState<"login" | "signup">(mode ?? "login");
@@ -47,17 +49,17 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message === "Invalid login credentials" ? "Identifiants invalides" : error.message);
+      toast.error(error.message === "Invalid login credentials" ? t("auth.invalidCreds") : error.message);
       return;
     }
-    toast.success("Bienvenue !");
+    toast.success(t("auth.welcomeToast"));
     navigate({ to: "/" });
   }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      toast.error(t("auth.pwdTooShort"));
       return;
     }
     setLoading(true);
@@ -71,10 +73,10 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message.includes("already") ? "Cet email est déjà utilisé" : error.message);
+      toast.error(error.message.includes("already") ? t("auth.emailUsed") : error.message);
       return;
     }
-    toast.success("Compte créé ! Vous pouvez vous connecter.");
+    toast.success(t("auth.accountCreated"));
     setTab("login");
   }
 
@@ -83,29 +85,29 @@ function AuthPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-display font-bold mb-2">BT</div>
-          <CardTitle className="font-display text-2xl">Bienvenue sur BATIR TCHAD</CardTitle>
-          <CardDescription>Signalez, suivez, transformez votre territoire.</CardDescription>
+          <CardTitle className="font-display text-2xl">{t("auth.welcome")}</CardTitle>
+          <CardDescription>{t("auth.welcomeSub")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={tab} onValueChange={(v) => setTab(v as "login" | "signup")}>
             <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="login">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Inscription</TabsTrigger>
+              <TabsTrigger value="login">{t("auth.tabLogin")}</TabsTrigger>
+              <TabsTrigger value="signup">{t("auth.tabSignup")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("auth.email")}</Label>
                   <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t("auth.password")}</Label>
                   <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Se connecter
+                  {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+                  {t("auth.signInBtn")}
                 </Button>
               </form>
             </TabsContent>
@@ -113,21 +115,21 @@ function AuthPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nom complet</Label>
+                  <Label htmlFor="name">{t("auth.fullName")}</Label>
                   <Input id="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email-s">Email</Label>
+                  <Label htmlFor="email-s">{t("auth.email")}</Label>
                   <Input id="email-s" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-s">Mot de passe</Label>
+                  <Label htmlFor="password-s">{t("auth.password")}</Label>
                   <Input id="password-s" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <p className="text-xs text-muted-foreground">Minimum 6 caractères</p>
+                  <p className="text-xs text-muted-foreground">{t("auth.passwordHint")}</p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Créer mon compte
+                  {loading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
+                  {t("auth.signUpBtn")}
                 </Button>
               </form>
             </TabsContent>
