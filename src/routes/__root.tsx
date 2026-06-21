@@ -66,6 +66,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "BATIR TCHAD — Plateforme citoyenne du Tchad" },
+      { name: "description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
