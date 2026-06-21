@@ -62,13 +62,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "BATIR TCHAD — Plateforme citoyenne du Tchad" },
-      { name: "description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
-      { name: "author", content: "BATIR TCHAD" },
-      { property: "og:title", content: "BATIR TCHAD" },
-      { property: "og:description", content: "Plateforme citoyenne pour signaler et suivre la réhabilitation des infrastructures au Tchad." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -85,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
+    <html>
       <head>
         <HeadContent />
       </head>
@@ -99,11 +92,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { i18n } = useTranslation();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
+        <div className={i18n.language.startsWith("ar") ? "min-h-screen flex flex-col rtl" : "min-h-screen flex flex-col"}>
           <Navbar />
           <main className="flex-1">
             <Outlet />
@@ -115,3 +109,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
