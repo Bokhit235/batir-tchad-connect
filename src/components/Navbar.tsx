@@ -43,7 +43,7 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-6">{navLinks}</nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <LanguageSwitcher className="border-primary-foreground/40 bg-primary/30 text-primary-foreground [&_button]:hover:bg-primary/50" />
+          <LanguageSwitcher />
           {loading ? null : user ? (
             <>
               <Button asChild size="sm" variant="secondary">
