@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { type ReportSeverity, type ReportStatus } from "@/lib/constants";
+import { getSeverity, getStatus, type ReportSeverity, type ReportStatus } from "@/lib/constants";
 
 export function SeverityBadge({ value }: { value: ReportSeverity }) {
   const { t } = useTranslation();
@@ -20,5 +20,3 @@ export function StatusBadge({ value }: { value: ReportStatus }) {
   const s = getStatus(value);
   return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${s.color}`}>{t(`statuses.${value}`)}</span>;
 }
-
-import { getSeverity, getStatus } from "@/lib/constants";
