@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/tableau-de-bord")({
 
 function DashboardPage() {
   const { t } = useTranslation();
-  const { isAuthority, loading } = useAuth();
+  const { isAdmin, loading } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ReportCategory | "all">("all");
   const [status, setStatus] = useState<ReportStatus | "all">("all");
@@ -67,7 +67,7 @@ function DashboardPage() {
 
   if (loading) return <div className="container mx-auto px-4 py-16 text-center">{t("common.loading")}</div>;
 
-  if (!isAuthority) {
+  if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-16 max-w-md text-center">
         <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

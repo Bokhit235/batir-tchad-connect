@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function Navbar() {
   const { t } = useTranslation();
-  const { user, signOut, isAuthority, loading } = useAuth();
+  const { user, signOut, isAdmin, loading } = useAuth();
   const [open, setOpen] = useState(false);
 
   const navLinks = (
@@ -19,7 +19,7 @@ export function Navbar() {
       <Link to="/signalements" className="text-sm font-medium hover:text-secondary transition-colors" onClick={() => setOpen(false)}>
         {t("nav.reports")}
       </Link>
-      {isAuthority && (
+      {isAdmin && (
         <Link to="/tableau-de-bord" className="text-sm font-medium hover:text-secondary transition-colors" onClick={() => setOpen(false)}>
           {t("nav.dashboard")}
         </Link>
