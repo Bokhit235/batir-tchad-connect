@@ -203,62 +203,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_list_reports: {
-        Args: never
-        Returns: {
-          address: string | null
-          category: Database["public"]["Enums"]["report_category"]
-          city: string | null
-          created_at: string
-          description: string
-          id: string
-          latitude: number
-          longitude: number
-          province: string | null
-          reporter_id: string
-          resolution_note: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          severity: Database["public"]["Enums"]["report_severity"]
-          status: Database["public"]["Enums"]["report_status"]
-          title: string
-          updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "reports"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      get_my_reports: {
-        Args: never
-        Returns: {
-          address: string | null
-          category: Database["public"]["Enums"]["report_category"]
-          city: string | null
-          created_at: string
-          description: string
-          id: string
-          latitude: number
-          longitude: number
-          province: string | null
-          reporter_id: string
-          resolution_note: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          severity: Database["public"]["Enums"]["report_severity"]
-          status: Database["public"]["Enums"]["report_status"]
-          title: string
-          updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "reports"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
+      [_ in never]: never
     }
     Enums: {
       app_role: "citizen" | "authority" | "admin"
