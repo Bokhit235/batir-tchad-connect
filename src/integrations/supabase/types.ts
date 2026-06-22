@@ -77,6 +77,13 @@ export type Database = {
             referencedRelation: "reports"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "report_images_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       report_status_history: {
@@ -113,6 +120,13 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_status_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports_public"
             referencedColumns: ["id"]
           },
         ]
@@ -200,7 +214,102 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      report_status_history_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          new_status: Database["public"]["Enums"]["report_status"] | null
+          note: string | null
+          old_status: Database["public"]["Enums"]["report_status"] | null
+          report_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          new_status?: Database["public"]["Enums"]["report_status"] | null
+          note?: string | null
+          old_status?: Database["public"]["Enums"]["report_status"] | null
+          report_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          new_status?: Database["public"]["Enums"]["report_status"] | null
+          note?: string | null
+          old_status?: Database["public"]["Enums"]["report_status"] | null
+          report_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_status_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_status_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports_public: {
+        Row: {
+          address: string | null
+          category: Database["public"]["Enums"]["report_category"] | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          latitude: number | null
+          longitude: number | null
+          province: string | null
+          resolution_note: string | null
+          reviewed_at: string | null
+          severity: Database["public"]["Enums"]["report_severity"] | null
+          status: Database["public"]["Enums"]["report_status"] | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["report_category"] | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          province?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          severity?: Database["public"]["Enums"]["report_severity"] | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["report_category"] | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          province?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          severity?: Database["public"]["Enums"]["report_severity"] | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
