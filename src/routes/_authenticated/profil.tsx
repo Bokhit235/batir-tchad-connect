@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReports } from "@/lib/reports.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,18 +41,11 @@ function ProfilPage() {
     });
   }, [user]);
 
+  const fetchMyReports = useServerFn(getMyReports);
   const { data: myReports = [] } = useQuery({
     queryKey: ["my-reports", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reports")
-        .select("id,title,category,severity,status,city,province,created_at")
-        .eq("reporter_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => fetchMyReports(),
   });
 
   async function save(e: React.FormEvent) {

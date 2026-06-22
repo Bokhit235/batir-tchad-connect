@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { adminListReports } from "@/lib/reports.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,17 +29,11 @@ function DashboardPage() {
   const [severity, setSeverity] = useState<ReportSeverity | "all">("all");
   const [province, setProvince] = useState<string | "all">("all");
 
+  const fetchReports = useServerFn(adminListReports);
   const { data: reports = [] } = useQuery({
     queryKey: ["dashboard-reports"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reports")
-        .select("id,title,category,severity,status,province,city,created_at,reporter_id")
-        .order("created_at", { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-      return data ?? [];
-    },
+    enabled: isAdmin,
+    queryFn: () => fetchReports(),
   });
 
   const stats = useMemo(() => {
