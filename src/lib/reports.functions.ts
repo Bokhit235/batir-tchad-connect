@@ -4,6 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SIGN_EXPIRY = 60 * 60 * 24 * 7; // 7 days
 
+async function isAdminOrAuthority(userId: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+  return (data ?? []).some((r) => r.role === "admin" || r.role === "authority");
+}
+
 export const getMyReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -20,15 +26,8 @@ export const getMyReports = createServerFn({ method: "GET" })
 export const adminListReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    if (!(await isAdminOrAuthority(context.userId))) throw new Error("Forbidden");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: roles, error: rolesErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    if (rolesErr) throw new Error(rolesErr.message);
-    const allowed = (roles ?? []).some((r) => r.role === "admin" || r.role === "authority");
-    if (!allowed) throw new Error("Forbidden");
-
     const { data, error } = await supabaseAdmin
       .from("reports")
       .select("id,title,category,severity,status,province,city,created_at,reporter_id")
@@ -38,20 +37,84 @@ export const adminListReports = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/**
+ * Privileged detail: returns exact coordinates, address, reporter info, resolution note.
+ * Only the report owner and admins/authorities are allowed.
+ */
+export const getReportPrivileged = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: report, error } = await supabaseAdmin
+      .from("reports")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!report) return null;
+    const isOwner = report.reporter_id === context.userId;
+    const elevated = isOwner || (await isAdminOrAuthority(context.userId));
+    if (!elevated) throw new Error("Forbidden");
+    return report;
+  });
+
+export const getReportImages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: report } = await supabaseAdmin
+      .from("reports").select("reporter_id").eq("id", data.id).maybeSingle();
+    if (!report) return [] as { id: string; storage_path: string }[];
+    const elevated = report.reporter_id === context.userId || (await isAdminOrAuthority(context.userId));
+    if (!elevated) throw new Error("Forbidden");
+    const { data: imgs, error } = await supabaseAdmin
+      .from("report_images")
+      .select("id,storage_path")
+      .eq("report_id", data.id);
+    if (error) throw new Error(error.message);
+    return imgs ?? [];
+  });
+
+export const getReportHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: report } = await supabaseAdmin
+      .from("reports").select("reporter_id").eq("id", data.id).maybeSingle();
+    if (!report) return [];
+    const isAdmin = await isAdminOrAuthority(context.userId);
+    const isOwner = report.reporter_id === context.userId;
+    if (!isOwner && !isAdmin) throw new Error("Forbidden");
+    const { data: hist, error } = await supabaseAdmin
+      .from("report_status_history")
+      .select(isAdmin ? "*" : "id,report_id,old_status,new_status,note,created_at")
+      .eq("report_id", data.id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return hist ?? [];
+  });
+
 export const signReportPhotos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ paths: z.array(z.string()).max(100) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (data.paths.length === 0) return {} as Record<string, string>;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Only sign paths that actually belong to a stored report image.
+    // Only sign paths that belong to a stored image AND the caller is owner/admin of that report.
     const { data: rows, error: rowsErr } = await supabaseAdmin
       .from("report_images")
-      .select("storage_path")
+      .select("storage_path, reports!inner(reporter_id)")
       .in("storage_path", data.paths);
     if (rowsErr) throw new Error(rowsErr.message);
-    const valid = new Set((rows ?? []).map((r) => r.storage_path));
-    const allowed = data.paths.filter((p) => valid.has(p));
+
+    const isAdmin = await isAdminOrAuthority(context.userId);
+    const allowed = (rows ?? [])
+      .filter((r: any) => isAdmin || r.reports?.reporter_id === context.userId)
+      .map((r: any) => r.storage_path as string);
     if (allowed.length === 0) return {} as Record<string, string>;
 
     const { data: signed, error } = await supabaseAdmin.storage
