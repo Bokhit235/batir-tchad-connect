@@ -90,11 +90,12 @@ export const getReportHistory = createServerFn({ method: "POST" })
     if (!isOwner && !isAdmin) throw new Error("Forbidden");
     const { data: hist, error } = await supabaseAdmin
       .from("report_status_history")
-      .select(isAdmin ? "*" : "id,report_id,old_status,new_status,note,created_at")
+      .select("id,report_id,old_status,new_status,note,created_at,changed_by")
       .eq("report_id", data.id)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return hist ?? [];
+    // Redact actor for non-admins (still owner).
+    return (hist ?? []).map((h) => isAdmin ? h : { ...h, changed_by: null });
   });
 
 export const signReportPhotos = createServerFn({ method: "POST" })
