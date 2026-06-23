@@ -79,7 +79,6 @@ function SignalerPage() {
         if (upErr) { console.error(upErr); continue; }
         await supabase.from("report_images").insert({
           report_id: report.id,
-          image_url: path,
           storage_path: path,
         });
       }
