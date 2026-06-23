@@ -32,7 +32,7 @@ function ListPage() {
     queryKey: ["reports", "list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("reports")
+        .from("reports_public")
         .select("id,title,description,category,severity,status,province,city,created_at")
         .order("created_at", { ascending: false })
         .limit(500);
@@ -48,7 +48,7 @@ function ListPage() {
       (status === "all" || r.status === status) &&
       (severity === "all" || r.severity === severity) &&
       (province === "all" || r.province === province) &&
-      (!q || r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)),
+      (!q || (r.title ?? "").toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q)),
     );
   }, [reports, search, category, status, severity, province]);
 
