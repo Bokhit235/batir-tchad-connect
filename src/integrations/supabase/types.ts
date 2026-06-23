@@ -74,13 +74,6 @@ export type Database = {
             referencedRelation: "reports"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "report_images_report_id_fkey"
-            columns: ["report_id"]
-            isOneToOne: false
-            referencedRelation: "reports_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       report_status_history: {
@@ -117,13 +110,6 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "report_status_history_report_id_fkey"
-            columns: ["report_id"]
-            isOneToOne: false
-            referencedRelation: "reports_public"
             referencedColumns: ["id"]
           },
         ]
@@ -224,32 +210,6 @@ export type Database = {
           severity: Database["public"]["Enums"]["report_severity"] | null
           status: Database["public"]["Enums"]["report_status"] | null
           title: string | null
-        }
-        Insert: {
-          category?: Database["public"]["Enums"]["report_category"] | null
-          city?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          latitude_approx?: never
-          longitude_approx?: never
-          province?: string | null
-          severity?: Database["public"]["Enums"]["report_severity"] | null
-          status?: Database["public"]["Enums"]["report_status"] | null
-          title?: string | null
-        }
-        Update: {
-          category?: Database["public"]["Enums"]["report_category"] | null
-          city?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          latitude_approx?: never
-          longitude_approx?: never
-          province?: string | null
-          severity?: Database["public"]["Enums"]["report_severity"] | null
-          status?: Database["public"]["Enums"]["report_status"] | null
-          title?: string | null
         }
         Relationships: []
       }
