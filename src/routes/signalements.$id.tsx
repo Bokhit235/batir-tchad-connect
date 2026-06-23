@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { signImagePaths } from "@/lib/storage";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { getReportPrivileged, getReportImages, getReportHistory } from "@/lib/reports.functions";
 import { STATUSES, type ReportCategory, type ReportSeverity, type ReportStatus } from "@/lib/constants";
 import { MapPin, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -29,41 +31,53 @@ function DetailPage() {
   const [newStatus, setNewStatus] = useState<ReportStatus | "">("");
   const [note, setNote] = useState("");
 
-  const { data: report, isLoading } = useQuery({
-    queryKey: ["report", id],
+  const fetchPrivileged = useServerFn(getReportPrivileged);
+  const fetchImages = useServerFn(getReportImages);
+  const fetchHistory = useServerFn(getReportHistory);
+
+  // Public-safe data via sanitized view (approximate coords, no reporter info).
+  const { data: pub, isLoading } = useQuery({
+    queryKey: ["report-public", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("reports").select("*").eq("id", id).maybeSingle();
+      const { data, error } = await supabase
+        .from("reports_public")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
       if (error) throw error;
       if (!data) throw notFound();
       return data;
     },
   });
 
-  const { data: images = [] } = useQuery({
-    queryKey: ["report-images", id],
+  // Privileged data: only available to owner or admin/authority.
+  const { data: priv } = useQuery({
+    enabled: !!user,
+    queryKey: ["report-priv", id, user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("report_images")
-        .select("id,storage_path")
-        .eq("report_id", id);
-      if (error) throw error;
-      const paths = (data ?? []).map((r) => r.storage_path);
+      try {
+        return await fetchPrivileged({ data: { id } });
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const { data: images = [] } = useQuery({
+    enabled: !!user && !!priv,
+    queryKey: ["report-images", id, user?.id],
+    queryFn: async () => {
+      const list = await fetchImages({ data: { id } });
+      const paths = list.map((r) => r.storage_path);
       const urls = await signImagePaths(paths);
-      return (data ?? []).map((r) => ({ ...r, url: urls[r.storage_path] }));
+      return list.map((r) => ({ ...r, url: urls[r.storage_path] }));
     },
   });
 
   const { data: history = [] } = useQuery({
-    queryKey: ["report-history", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("report_status_history")
-        .select("*")
-        .eq("report_id", id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    enabled: !!user && !!priv,
+    queryKey: ["report-history", id, user?.id],
+    queryFn: () => fetchHistory({ data: { id } }),
   });
 
   const updateMut = useMutation({
@@ -84,18 +98,24 @@ function DetailPage() {
       toast.success(t("detail.statusUpdated"));
       setNote("");
       setNewStatus("");
-      qc.invalidateQueries({ queryKey: ["report", id] });
+      qc.invalidateQueries({ queryKey: ["report-public", id] });
+      qc.invalidateQueries({ queryKey: ["report-priv", id] });
       qc.invalidateQueries({ queryKey: ["report-history", id] });
       qc.invalidateQueries({ queryKey: ["reports"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading || !report) {
+  if (isLoading || !pub) {
     return <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">{t("common.loading")}</div>;
   }
 
   const locale = i18n.language.startsWith("ar") ? "ar-SA" : "fr-FR";
+
+  // Use exact coords if privileged, else approximate.
+  const lat = priv?.latitude ?? pub.latitude_approx!;
+  const lng = priv?.longitude ?? pub.longitude_approx!;
+  const resolutionNote = priv?.resolution_note;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -109,24 +129,24 @@ function DetailPage() {
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl">{report.category === "route" ? "🛣️" : report.category === "pont" ? "🌉" : report.category === "ecole" ? "🏫" : report.category === "sante" ? "🏥" : report.category === "eau" ? "💧" : report.category === "marche" ? "🏪" : "📍"}</span>
-                  <span className="text-xs font-semibold uppercase text-muted-foreground">{t(`categories.${report.category as ReportCategory}`)}</span>
+                  <span className="text-3xl">{pub.category === "route" ? "🛣️" : pub.category === "pont" ? "🌉" : pub.category === "ecole" ? "🏫" : pub.category === "sante" ? "🏥" : pub.category === "eau" ? "💧" : pub.category === "marche" ? "🏪" : "📍"}</span>
+                  <span className="text-xs font-semibold uppercase text-muted-foreground">{t(`categories.${pub.category as ReportCategory}`)}</span>
                 </div>
                 <div className="flex gap-2">
-                  <SeverityBadge value={report.severity as ReportSeverity} />
-                  <StatusBadge value={report.status as ReportStatus} />
+                  <SeverityBadge value={pub.severity as ReportSeverity} />
+                  <StatusBadge value={pub.status as ReportStatus} />
                 </div>
               </div>
-              <h1 className="font-display text-2xl md:text-3xl font-bold">{report.title}</h1>
+              <h1 className="font-display text-2xl md:text-3xl font-bold">{pub.title}</h1>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-2">
-                <div className="flex items-center gap-1"><MapPin className="h-4 w-4" />{report.city || "—"}, {report.province || t("common.chad")}</div>
-                <div className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(report.created_at).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</div>
+                <div className="flex items-center gap-1"><MapPin className="h-4 w-4" />{pub.city || "—"}, {pub.province || t("common.chad")}</div>
+                <div className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(pub.created_at!).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</div>
               </div>
-              <p className="mt-4 whitespace-pre-wrap text-foreground/90">{report.description}</p>
-              {report.resolution_note && (
+              <p className="mt-4 whitespace-pre-wrap text-foreground/90">{pub.description}</p>
+              {resolutionNote && (
                 <div className="mt-4 p-3 rounded-md bg-muted text-sm">
                   <div className="font-semibold mb-1">{t("detail.authorityNote")}</div>
-                  {report.resolution_note}
+                  {resolutionNote}
                 </div>
               )}
             </CardContent>
@@ -148,21 +168,26 @@ function DetailPage() {
           )}
 
           <Card>
-            <CardHeader><CardTitle className="text-base">{t("detail.location")}</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {t("detail.location")}
+                {!priv && <span className="ms-2 text-xs font-normal text-muted-foreground">({t("common.approximate") ?? "approximative"})</span>}
+              </CardTitle>
+            </CardHeader>
             <CardContent className="p-0">
               <div className="h-72">
                 <MapView
                   points={[{
-                    id: report.id,
-                    title: report.title,
-                    latitude: report.latitude,
-                    longitude: report.longitude,
-                    severity: report.severity as ReportSeverity,
-                    category: report.category,
-                    status: report.status,
+                    id: pub.id!,
+                    title: pub.title!,
+                    latitude: lat,
+                    longitude: lng,
+                    severity: pub.severity as ReportSeverity,
+                    category: pub.category!,
+                    status: pub.status!,
                   }]}
-                  center={[report.latitude, report.longitude]}
-                  zoom={13}
+                  center={[lat, lng]}
+                  zoom={priv ? 13 : 8}
                 />
               </div>
             </CardContent>
@@ -188,27 +213,29 @@ function DetailPage() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader><CardTitle className="text-base">{t("detail.history")}</CardTitle></CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("detail.noHistory")}</p>
-              ) : (
-                <ol className="space-y-3">
-                  {history.map((h) => (
-                    <li key={h.id} className="border-s-2 border-primary/30 ps-3">
-                      <div className="text-sm font-medium">
-                        {h.old_status ? <>{t("detail.from")} <StatusBadge value={h.old_status as ReportStatus} /> {t("detail.to")} </> : null}
-                        <StatusBadge value={h.new_status as ReportStatus} />
-                      </div>
-                      <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString(locale)}</div>
-                      {h.note && <div className="text-sm mt-1">{h.note}</div>}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </CardContent>
-          </Card>
+          {priv && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">{t("detail.history")}</CardTitle></CardHeader>
+              <CardContent>
+                {history.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("detail.noHistory")}</p>
+                ) : (
+                  <ol className="space-y-3">
+                    {history.map((h) => (
+                      <li key={h.id} className="border-s-2 border-primary/30 ps-3">
+                        <div className="text-sm font-medium">
+                          {h.old_status ? <>{t("detail.from")} <StatusBadge value={h.old_status as ReportStatus} /> {t("detail.to")} </> : null}
+                          <StatusBadge value={h.new_status as ReportStatus} />
+                        </div>
+                        <div className="text-xs text-muted-foreground">{new Date(h.created_at!).toLocaleString(locale)}</div>
+                        {h.note && <div className="text-sm mt-1">{h.note}</div>}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
