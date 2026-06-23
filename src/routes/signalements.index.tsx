@@ -32,7 +32,7 @@ function ListPage() {
     queryKey: ["reports", "list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("reports")
+        .from("reports_public")
         .select("id,title,description,category,severity,status,province,city,created_at")
         .order("created_at", { ascending: false })
         .limit(500);
@@ -48,7 +48,7 @@ function ListPage() {
       (status === "all" || r.status === status) &&
       (severity === "all" || r.severity === severity) &&
       (province === "all" || r.province === province) &&
-      (!q || r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)),
+      (!q || (r.title ?? "").toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q)),
     );
   }, [reports, search, category, status, severity, province]);
 
@@ -96,9 +96,10 @@ function ListPage() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((r) => {
-            const cat = getCategory(r.category);
+            const cat = getCategory(r.category as ReportCategory);
             return (
-              <Link key={r.id} to="/signalements/$id" params={{ id: r.id }}>
+              <Link key={r.id!} to="/signalements/$id" params={{ id: r.id! }}>
+
                 <Card className="h-full hover:border-primary/40 hover:-translate-y-0.5 transition-all">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between gap-2 mb-3">
