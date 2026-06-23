@@ -35,8 +35,8 @@ function CartePage() {
     queryKey: ["reports", "map"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("reports")
-        .select("id,title,latitude,longitude,severity,category,status,province,city,created_at")
+        .from("reports_public")
+        .select("id,title,latitude_approx,longitude_approx,severity,category,status,province,city,created_at")
         .order("created_at", { ascending: false })
         .limit(2000);
       if (error) throw error;
@@ -53,15 +53,17 @@ function CartePage() {
     );
   }, [reports, category, status, severity, province]);
 
-  const points: MapPoint[] = filtered.map((r) => ({
-    id: r.id,
-    title: r.title,
-    latitude: r.latitude,
-    longitude: r.longitude,
-    severity: r.severity as ReportSeverity,
-    category: r.category,
-    status: r.status,
-  }));
+  const points: MapPoint[] = filtered
+    .filter((r) => r.latitude_approx != null && r.longitude_approx != null)
+    .map((r) => ({
+      id: r.id!,
+      title: r.title!,
+      latitude: r.latitude_approx as number,
+      longitude: r.longitude_approx as number,
+      severity: r.severity as ReportSeverity,
+      category: r.category!,
+      status: r.status!,
+    }));
 
   const activeFilters = [category, status, severity, province].filter((f) => f !== "all").length;
 
