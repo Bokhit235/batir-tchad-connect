@@ -51,21 +51,18 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          image_url: string
           report_id: string
           storage_path: string
         }
         Insert: {
           created_at?: string
           id?: string
-          image_url: string
           report_id: string
           storage_path: string
         }
         Update: {
           created_at?: string
           id?: string
-          image_url?: string
           report_id?: string
           storage_path?: string
         }
@@ -75,6 +72,13 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_images_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports_public"
             referencedColumns: ["id"]
           },
         ]
@@ -113,6 +117,13 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_status_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports_public"
             referencedColumns: ["id"]
           },
         ]
@@ -200,7 +211,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      reports_public: {
+        Row: {
+          category: Database["public"]["Enums"]["report_category"] | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          latitude_approx: number | null
+          longitude_approx: number | null
+          province: string | null
+          severity: Database["public"]["Enums"]["report_severity"] | null
+          status: Database["public"]["Enums"]["report_status"] | null
+          title: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["report_category"] | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          latitude_approx?: never
+          longitude_approx?: never
+          province?: string | null
+          severity?: Database["public"]["Enums"]["report_severity"] | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["report_category"] | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          latitude_approx?: never
+          longitude_approx?: never
+          province?: string | null
+          severity?: Database["public"]["Enums"]["report_severity"] | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
