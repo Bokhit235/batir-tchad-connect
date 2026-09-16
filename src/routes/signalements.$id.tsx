@@ -20,6 +20,25 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/signalements/$id")({
   ssr: false,
+  head: ({ params }) => {
+    const siteUrl = typeof window !== "undefined"
+      ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+      : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+    const pageUrl = `${siteUrl}/signalements/${params.id}`;
+
+    return {
+      meta: [
+        { title: "Détail du signalement | BATIR TCHAD" },
+        { name: "description", content: "Consultez le détail et l'état de résolution de ce signalement d'infrastructure au Tchad." },
+        { property: "og:title", content: "Détail du signalement | BATIR TCHAD" },
+        { property: "og:description", content: "Consultez le détail et l'état de résolution de ce signalement d'infrastructure au Tchad." },
+        { property: "og:url", content: pageUrl },
+      ],
+      links: [
+        { rel: "canonical", href: pageUrl },
+      ],
+    };
+  },
   component: DetailPage,
 });
 

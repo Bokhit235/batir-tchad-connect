@@ -11,12 +11,26 @@ import { SeverityBadge, StatusBadge } from "@/components/SeverityBadge";
 import { MapPin, Search } from "lucide-react";
 
 export const Route = createFileRoute("/signalements/")({
-  head: () => ({
-    meta: [
-      { title: "Liste des signalements — BATIR TCHAD" },
-      { name: "description", content: "Tous les signalements d'infrastructures publiques au Tchad." },
-    ],
-  }),
+  head: () => {
+    const siteUrl = typeof window !== "undefined"
+      ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+      : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+    const pageUrl = `${siteUrl}/signalements`;
+
+    return {
+      meta: [
+        { title: "Signalements citoyens au Tchad | BATIR TCHAD" },
+        { name: "description", content: "Découvrez les signalements d'infrastructures réalisés par les citoyens au Tchad et suivez leur évolution." },
+        { property: "og:title", content: "Signalements citoyens au Tchad | BATIR TCHAD" },
+        { property: "og:description", content: "Découvrez les signalements d'infrastructures réalisés par les citoyens au Tchad et suivez leur évolution." },
+        { property: "og:url", content: pageUrl },
+        { property: "og:type", content: "website" },
+      ],
+      links: [
+        { rel: "canonical", href: pageUrl },
+      ],
+    };
+  },
   component: ListPage,
 });
 

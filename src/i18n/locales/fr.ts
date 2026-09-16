@@ -1,6 +1,7 @@
 export const fr = {
   common: {
     loading: "Chargement…",
+    required: "Requis",
     save: "Enregistrer",
     cancel: "Annuler",
     update: "Mettre à jour",
@@ -71,6 +72,14 @@ export const fr = {
     welcomeToast: "Bienvenue !",
     pwdTooShort: "Le mot de passe doit contenir au moins 6 caractères",
     accountCreated: "Compte créé ! Vous pouvez vous connecter.",
+    passwordMismatch: "Les mots de passe ne correspondent pas.",
+    resetSent: "Email de réinitialisation envoyé. Vérifiez votre boîte mail.",
+    forgot: "Mot de passe oublié ?",
+    resetPasswordBtn: "Envoyer l'email de réinitialisation",
+    confirmPassword: "Confirmer le mot de passe",
+    confirmEmail: "Veuillez confirmer votre adresse e-mail avant de vous connecter.",
+    resetPassword: "Réinitialiser le mot de passe",
+    resetDone: "Mot de passe mis à jour. Vous pouvez vous connecter.",
   },
   map: {
     title: "Carte des signalements",

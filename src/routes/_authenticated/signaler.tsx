@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,12 @@ import { Loader2, MapPin, Camera, X, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/signaler")({
+  head: () => ({
+    meta: [
+      { title: "Nouveau signalement | BATIR TCHAD" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SignalerPage,
 });
 
@@ -31,8 +37,31 @@ function SignalerPage() {
   const [address, setAddress] = useState("");
   const [latLng, setLatLng] = useState<[number, number] | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const open = params.get('openCamera');
+      const lat = params.get('lat');
+      const lng = params.get('lng');
+      if (lat && lng) {
+        const la = parseFloat(lat);
+        const ln = parseFloat(lng);
+        if (!Number.isNaN(la) && !Number.isNaN(ln)) {
+          setLatLng([la, ln]);
+        }
+      }
+      if (open && fileInputRef.current) {
+        // programmatically open the file picker (mobile will prefer camera when capture attr present)
+        fileInputRef.current.click();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
   function detectLocation() {
     if (!navigator.geolocation) {
       toast.error(t("signaler.errGeoUnavailable"));
@@ -53,6 +82,21 @@ function SignalerPage() {
     const list = Array.from(e.target.files ?? []);
     setFiles((prev) => [...prev, ...list].slice(0, 6));
   }
+
+  // generate object URL previews and clean them up when files change/unmount
+  useEffect(() => {
+    // revoke previous previews
+    setPreviews((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p));
+      return [];
+    });
+    if (files.length === 0) return;
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [files]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -174,17 +218,17 @@ function SignalerPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">{t("signaler.photos")}</CardTitle></CardHeader>
           <CardContent>
-            <label className="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors">
+            <label className="block border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors" aria-hidden>
               <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
               <div className="text-sm font-medium">{t("signaler.addPhotos")}</div>
               <div className="text-xs text-muted-foreground">{t("signaler.photoFormats")}</div>
-              <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+              <input ref={fileInputRef} type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={handleFiles} aria-label={t("signaler.addPhotos")} />
             </label>
             {files.length > 0 && (
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-3">
                 {files.map((f, i) => (
                   <div key={i} className="relative aspect-square rounded-md overflow-hidden border group">
-                    <img src={URL.createObjectURL(f)} alt="" className="h-full w-full object-cover" />
+                    <img src={previews[i]} alt="" className="h-full w-full object-cover" />
                     <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))}
                       className="absolute top-1 end-1 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3 w-3" />

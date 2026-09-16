@@ -17,6 +17,12 @@ import {
 import { BarChart3, FileText, AlertTriangle, CheckCircle2, Search, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/tableau-de-bord")({
+  head: () => ({
+    meta: [
+      { title: "Tableau de bord | BATIR TCHAD" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: DashboardPage,
 });
 

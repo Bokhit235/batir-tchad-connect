@@ -24,41 +24,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
-      if (newSession?.user) {
-        setTimeout(() => {
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", newSession.user.id)
-            .then(({ data }) => setRoles((data ?? []).map((r) => r.role as AppRole)));
-        }, 0);
-      } else {
+    let mounted = true;
+
+    // Helper to sync roles
+    const syncRoles = (userId: string | undefined) => {
+      if (!userId) {
         setRoles([]);
+        return;
       }
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        router.invalidate();
-      }
-    });
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .then(({ data }) => {
+          if (mounted) {
+            setRoles((data ?? []).map((r) => r.role as AppRole));
+          }
+        })
+        .catch(() => {
+          if (mounted) setRoles([]);
+        });
+    };
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .then(({ data: r }) => setRoles((r ?? []).map((x) => x.role as AppRole)));
-      }
+    // Listen for auth state changes
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!mounted) return;
+      setSession(newSession);
+      syncRoles(newSession?.user?.id);
       setLoading(false);
+
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        try {
+          router.invalidate();
+        } catch (e) {
+          /* ignore */
+        }
+      }
     });
 
-    return () => sub.subscription.unsubscribe();
+    // Initial session fetch
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        const currentSession = data?.session ?? null;
+        setSession(currentSession);
+        syncRoles(currentSession?.user?.id);
+      })
+      .catch(() => {
+        if (mounted) setSession(null);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      try {
+        sub.subscription.unsubscribe();
+      } catch (e) {
+        /* ignore */
+      }
+    };
   }, [router]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setSession(null);
+      setRoles([]);
+      try {
+        router.navigate({ to: "/" });
+      } catch (e) {
+        /* ignore */
+      }
+    }
   };
 
   return (

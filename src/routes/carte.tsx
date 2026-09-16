@@ -13,12 +13,26 @@ import { Filter, X } from "lucide-react";
 
 export const Route = createFileRoute("/carte")({
   ssr: false,
-  head: () => ({
-    meta: [
-      { title: "Carte des signalements — BATIR TCHAD" },
-      { name: "description", content: "Carte interactive de tous les signalements d'infrastructures dégradées au Tchad." },
-    ],
-  }),
+  head: () => {
+    const siteUrl = typeof window !== "undefined"
+      ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+      : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+    const pageUrl = `${siteUrl}/carte`;
+
+    return {
+      meta: [
+        { title: "Carte des infrastructures au Tchad | BATIR TCHAD" },
+        { name: "description", content: "Consultez la carte des infrastructures et des signalements citoyens au Tchad sur BATIR TCHAD." },
+        { property: "og:title", content: "Carte des infrastructures au Tchad | BATIR TCHAD" },
+        { property: "og:description", content: "Consultez la carte des infrastructures et des signalements citoyens au Tchad sur BATIR TCHAD." },
+        { property: "og:url", content: pageUrl },
+        { property: "og:type", content: "website" },
+      ],
+      links: [
+        { rel: "canonical", href: pageUrl },
+      ],
+    };
+  },
   component: CartePage,
 });
 

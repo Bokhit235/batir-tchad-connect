@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, LogOut, User as UserIcon, Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
@@ -10,6 +11,19 @@ export function Navbar() {
   const { t } = useTranslation();
   const { user, signOut, isAdmin, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [fullName, setFullName] = useState<string | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    if (!user) { setFullName(null); return; }
+    const metaName = user.user_metadata?.full_name;
+    if (metaName) setFullName(metaName);
+    supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (!mounted) return;
+      if (data?.full_name) setFullName(data.full_name);
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, [user]);
 
   const navLinks = (
     <>
@@ -56,12 +70,18 @@ export function Navbar() {
               <Button asChild size="sm" variant="secondary">
                 <Link to="/signaler"><Plus className="h-4 w-4 me-1" />{t("nav.report")}</Link>
               </Button>
-              <Button asChild size="sm" variant="ghost" className="text-primary-foreground hover:bg-primary/60">
-                <Link to="/profil"><UserIcon className="h-4 w-4" /></Link>
-              </Button>
-              <Button size="sm" variant="ghost" className="text-primary-foreground hover:bg-primary/60" onClick={signOut}>
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <div className="relative">
+                <button className="inline-flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-md hover:bg-primary/60" onClick={() => setUserMenuOpen((s) => !s)} aria-haspopup="true" aria-expanded={userMenuOpen}>
+                  <UserIcon className="h-4 w-4" /> <span>Bonjour, {fullName || user.email}</span>
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute end-0 mt-2 w-48 bg-card text-card-foreground border rounded-md shadow-lg py-1 z-50">
+                    <Link to="/profil" className="block px-3 py-2 text-sm hover:bg-muted/60" onClick={() => setUserMenuOpen(false)}>{t('nav.profile')}</Link>
+                    <Link to="/signalements" className="block px-3 py-2 text-sm hover:bg-muted/60" onClick={() => setUserMenuOpen(false)}>{t('nav.reports')}</Link>
+                    <button className="w-full text-start px-3 py-2 text-sm hover:bg-muted/60 text-destructive font-medium" onClick={() => { setUserMenuOpen(false); signOut(); }}>{t('nav.signOut')}</button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>

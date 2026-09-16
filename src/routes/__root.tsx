@@ -62,28 +62,39 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "BATIR TCHAD — Plateforme citoyenne du Tchad" },
-      { name: "description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
-      { property: "og:title", content: "BATIR TCHAD — Plateforme citoyenne du Tchad" },
-      { name: "twitter:title", content: "BATIR TCHAD — Plateforme citoyenne du Tchad" },
-      { property: "og:description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
-      { name: "twitter:description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/aec306b1-8164-44cd-a0af-975e6d75d92a/id-preview-22762f95--8d8a16c1-3cd2-4dab-bd0d-9c93c94afb18.lovable.app-1782200502954.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/aec306b1-8164-44cd-a0af-975e6d75d92a/id-preview-22762f95--8d8a16c1-3cd2-4dab-bd0d-9c93c94afb18.lovable.app-1782200502954.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:type", content: "website" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
-    ],
-  }),
+  head: () => {
+    const siteUrl = typeof window !== "undefined"
+      ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+      : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: "BATIR TCHAD – Plateforme citoyenne pour améliorer les infrastructures au Tchad" },
+        { name: "description", content: "BATIR TCHAD est une plateforme citoyenne permettant de signaler les infrastructures dégradées au Tchad (routes, ponts, écoles, santé, eau) et de suivre leur traitement." },
+        { property: "og:site_name", content: "BATIR TCHAD" },
+        { property: "og:title", content: "BATIR TCHAD – Plateforme citoyenne pour améliorer les infrastructures au Tchad" },
+        { property: "og:description", content: "Signalez les infrastructures publiques dégradées au Tchad et suivez leur résolution par les autorités." },
+        { property: "og:url", content: siteUrl },
+        { property: "og:type", content: "website" },
+        { property: "og:locale", content: "fr_TD" },
+        { property: "og:locale:alternate", content: "ar_TD" },
+        { property: "og:image", content: `${siteUrl}/og-image.png` },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "BATIR TCHAD – Plateforme citoyenne au Tchad" },
+        { name: "twitter:description", content: "Signalez les infrastructures publiques dégradées au Tchad. Routes, ponts, écoles, santé, eau — votre voix compte." },
+        { name: "twitter:image", content: `${siteUrl}/og-image.png` },
+      ],
+      links: [
+        { rel: "canonical", href: siteUrl },
+        { rel: "stylesheet", href: appCss },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

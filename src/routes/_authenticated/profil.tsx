@@ -17,6 +17,12 @@ import { MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profil")({
+  head: () => ({
+    meta: [
+      { title: "Mon profil | BATIR TCHAD" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ProfilPage,
 });
 

@@ -1,26 +1,77 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Camera, BarChart3, ShieldCheck, ArrowRight } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "BATIR TCHAD — Signalez les infrastructures dégradées" },
-      { name: "description", content: "Plateforme citoyenne pour signaler routes, ponts, écoles, centres de santé et autres infrastructures à réparer au Tchad." },
-      { property: "og:title", content: "BATIR TCHAD" },
-      { property: "og:description", content: "Signalez les infrastructures dégradées et suivez leur résolution par les autorités." },
-    ],
-  }),
+  head: () => {
+    const siteUrl = typeof window !== "undefined"
+      ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+      : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+
+    return {
+      meta: [
+        { title: "BATIR TCHAD – Plateforme citoyenne pour améliorer les infrastructures au Tchad" },
+        { name: "description", content: "BATIR TCHAD est une plateforme citoyenne permettant de signaler les infrastructures dégradées au Tchad, de les localiser et de suivre leur traitement." },
+        { name: "keywords", content: "BATIR TCHAD, infrastructures Tchad, signalement infrastructure Tchad, signaler une route dégradée au Tchad, routes dégradées Tchad, infrastructures publiques Tchad, plateforme citoyenne Tchad, signalements citoyens Tchad" },
+        { property: "og:title", content: "BATIR TCHAD – Plateforme citoyenne pour améliorer les infrastructures au Tchad" },
+        { property: "og:description", content: "BATIR TCHAD est une plateforme citoyenne permettant de signaler les infrastructures dégradées au Tchad, de les localiser et de suivre leur traitement." },
+        { property: "og:url", content: siteUrl },
+        { property: "og:type", content: "website" },
+      ],
+      links: [
+        { rel: "canonical", href: siteUrl },
+      ],
+    };
+  },
   component: Index,
 });
 
 function Index() {
   const { t } = useTranslation();
+
+  const siteUrl = typeof window !== "undefined"
+    ? (import.meta.env?.VITE_SITE_URL || window.location.origin)
+    : (import.meta.env?.VITE_SITE_URL || "https://batirtchad.org");
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        "name": "BATIR TCHAD",
+        "url": siteUrl,
+        "description": "Plateforme citoyenne permettant de signaler les infrastructures dégradées au Tchad.",
+        "areaServed": {
+          "@type": "Country",
+          "name": "Tchad"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        "url": siteUrl,
+        "name": "BATIR TCHAD",
+        "description": "Signalez les infrastructures publiques dégradées au Tchad.",
+        "publisher": {
+          "@id": `${siteUrl}/#organization`
+        },
+        "inLanguage": ["fr", "ar"]
+      }
+    ]
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <div className="absolute inset-0 opacity-10" style={{
@@ -71,20 +122,11 @@ function Index() {
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { icon: Camera, title: t("home.step1Title"), desc: t("home.step1Desc") },
-            { icon: MapPin, title: t("home.step2Title"), desc: t("home.step2Desc") },
-            { icon: ShieldCheck, title: t("home.step3Title"), desc: t("home.step3Desc") },
+            { icon: Camera, title: t("home.step1Title"), desc: t("home.step1Desc"), key: 'camera' },
+            { icon: MapPin, title: t("home.step2Title"), desc: t("home.step2Desc"), key: 'loc' },
+            { icon: ShieldCheck, title: t("home.step3Title"), desc: t("home.step3Desc"), key: 'follow' },
           ].map((s, i) => (
-            <Card key={s.title} className="border-2 hover:border-primary/30 transition-colors">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4">
-                  <s.icon className="h-6 w-6" />
-                </div>
-                <div className="text-xs text-muted-foreground font-medium mb-1">{t("home.step")} {i + 1}</div>
-                <h3 className="font-display font-bold text-lg mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground">{s.desc}</p>
-              </CardContent>
-            </Card>
+            <InteractiveStep key={s.key} icon={s.icon} index={i} title={s.title} desc={s.desc} />
           ))}
         </div>
       </section>
@@ -132,5 +174,56 @@ function Index() {
         </div>
       </section>
     </div>
+  );
+}
+
+function InteractiveStep({ icon: Icon, index, title, desc }: { icon: any; index: number; title: string; desc: string }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    if (index === 0) {
+      // Open report page and open camera/file picker
+      navigate({ to: '/signaler' + '?openCamera=1' });
+      return;
+    }
+    if (index === 1) {
+      if (!navigator.geolocation) {
+        toast.error(t('signaler.errGeoUnavailable'));
+        return;
+      }
+      setLoading(true);
+      toast.info(t('signaler.locating'));
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLoading(false);
+        toast.success(t('signaler.positionDetected'));
+        navigate({ to: `/signaler?lat=${lat}&lng=${lng}` });
+      }, (err) => {
+        setLoading(false);
+        toast.error(t('signaler.errPosition'));
+      }, { enableHighAccuracy: true, timeout: 10000 });
+      return;
+    }
+    // follow/tracking
+    navigate({ to: '/signalements' });
+  }
+
+  return (
+    <Card className="border-2 hover:border-primary/30 transition-colors">
+      <CardContent className="pt-6">
+        <button type="button" onClick={handleClick} className="w-full text-start">
+          <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4">
+            <Icon className="h-6 w-6" />
+          </div>
+          <div className="text-xs text-muted-foreground font-medium mb-1">{t('home.step')} {index + 1}</div>
+          <h3 className="font-display font-bold text-lg mb-2">{title}</h3>
+          <p className="text-sm text-muted-foreground">{desc}</p>
+          {loading && <div className="text-xs text-muted-foreground mt-2">{t('signaler.locating')}</div>}
+        </button>
+      </CardContent>
+    </Card>
   );
 }
