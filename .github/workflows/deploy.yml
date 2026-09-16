@@ -32,9 +32,9 @@ jobs:
 
       - name: Build application
         env:
-          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL || 'https://bokhit235.github.io/batir-tchad-connect' }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://rwmfpxuyyvjiorzhjbsg.supabase.co' }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_fQrTNQENND4EHCLpfLE4Qw_EMy-iY27' }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Create 404.html SPA fallback
