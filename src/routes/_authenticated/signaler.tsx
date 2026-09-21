@@ -129,13 +129,19 @@ function SignalerPage() {
 
       toast.success(t("signaler.sent"));
       navigate({ to: "/signalements/$id", params: { id: report.id } });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur";
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  }
+    } catch (err: any) {
+  console.error("ERREUR ENVOI SIGNALEMENT :", err);
+
+  const message =
+    err?.message ||
+    err?.details ||
+    err?.hint ||
+    "Erreur inconnue lors de l'envoi du signalement.";
+
+  toast.error(message);
+} finally {
+  setSubmitting(false);
+}  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

@@ -20,13 +20,16 @@ export const Route = createFileRoute("/auth")({
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: "/" });
   },
-  head: ({ search }) => ({
-    meta: [
-      { title: (search as any)?.mode === "signup" ? "Créer un compte | BATIR TCHAD" : "Se connecter | BATIR TCHAD" },
-      { name: "description", content: "Espace de connexion et de création de compte citoyen sur BATIR TCHAD." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
+  head: () => ({
+  meta: [
+    { title: "Se connecter | BATIR TCHAD" },
+    {
+      name: "description",
+      content: "Espace de connexion et de création de compte citoyen sur BATIR TCHAD.",
+    },
+    { name: "robots", content: "noindex, nofollow" },
+  ],
+}),
   component: AuthPage,
 });
 
@@ -135,11 +138,17 @@ function AuthPage() {
       }
 
       if (resData.user) {
-        await supabase.from("profiles").upsert({
-          id: resData.user.id,
-          full_name: fullName,
-        }).catch(() => {});
-      }
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: resData.user.id,
+      full_name: fullName,
+    });
+
+  if (profileError) {
+    console.warn("Erreur lors de la création du profil :", profileError);
+  }
+}
 
       if (resData.session) {
         toast.success(t("auth.accountCreated") ?? "Compte créé avec succès !");
