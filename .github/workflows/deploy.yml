@@ -43,14 +43,14 @@ jobs:
 
       - name: Create 404.html SPA fallback
         run: |
-          if [ -f dist/index.html ]; then
-            cp dist/index.html dist/404.html
+          if [ -f .output/public/index.html ]; then
+            cp .output/public/index.html .output/public/404.html
           fi
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "dist"
+          path: ".output/public"
 
   deploy:
     environment:
