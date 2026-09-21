@@ -1,0 +1,20 @@
+---
+- name: Configure BATIR TCHAD server
+  hosts: local
+  connection: local
+  become: false
+
+  tasks:
+    - name: Create BATIR TCHAD directory
+      file:
+        path: "{{ ansible_env.HOME }}/batir-tchad"
+        state: directory
+        mode: "0755"
+
+    - name: Create application information file
+      copy:
+        content: |
+          BATIR TCHAD CONNECT
+          Server configured with Ansible
+        dest: "{{ ansible_env.HOME }}/batir-tchad/info.txt"
+        mode: "0644"
