@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { i18n } = useTranslation();
-  const isAr = i18n.language.startsWith("ar");
-  const isEn = i18n.language.startsWith("en");
+  const language = i18n.language || "fr";
+  const isAr = language.startsWith("ar");
+  const isEn = language.startsWith("en");
 
   return (
     <div

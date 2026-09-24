@@ -122,7 +122,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className={i18n.language.startsWith("ar") ? "min-h-screen flex flex-col rtl" : "min-h-screen flex flex-col"}>
+         <div
+  className={
+    (i18n.language || "fr").startsWith("ar")
+      ? "min-h-screen flex flex-col rtl"
+      : "min-h-screen flex flex-col"
+  }
+>
           <Navbar />
           <main className="flex-1">
             <Outlet />

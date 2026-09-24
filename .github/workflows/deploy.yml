@@ -2,7 +2,8 @@ name: Deploy BATIR TCHAD to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: "npm"
+          cache: npm
 
       - name: Setup npm
         run: npm install -g npm@11.6.2
@@ -36,6 +37,7 @@ jobs:
 
       - name: Build application
         env:
+          NITRO_PRESET: github_pages
           VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -43,21 +45,20 @@ jobs:
 
       - name: Create 404.html SPA fallback
         run: |
-          if [ -f .output/public/index.html ]; then
-            cp .output/public/index.html .output/public/404.html
-          fi
+          cp dist/client/index.html dist/client/404.html
 
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ".output/public"
+          path: dist/client
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Deploy to GitHub Pages
